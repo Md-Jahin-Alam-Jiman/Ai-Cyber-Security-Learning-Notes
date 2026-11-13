@@ -1,0 +1,248 @@
+Part A: Concepts (explain in your own words)
+
+1.  What are the three areas in Git, and what moves a change from one to
+    the next?
+
+Ans: 1. Working Directory 2. Staging Area 3. Repository
+
+git add : Working Directory → Staging Area git commit -m “Message” :
+Staging Area → Repository
+
+2.  What is a commit, really? What does it store, and what identifies
+    it?
+
+Ans: A commit is a snapshot of the project at a specific point in time.
+It stores a reference to the project’s file tree, its parent commit(s),
+author and committer information, timestamps, and the commit message. A
+commit is identified by its hash, which is calculated from the commit’s
+contents and metadata.
+
+3.  What is HEAD? What does “detached HEAD” mean and how do you get into
+    it?
+
+Ans: HEAD shows the commit/branch I am currently working from. Normally,
+HEAD points to the current branch, and the branch points to the latest
+commit.
+
+A detached HEAD means HEAD points directly to a commit instead of a
+branch. I can enter detached HEAD with:
+
+git switch –detach 03ae4819628686842b3e062192542164ac72dcc0
+
+or:
+
+git checkout 03ae4819628686842b3e062192542164ac72dcc0
+
+4.  What is a branch technically? Why is creating one so cheap?
+
+Ans: A branch is a movable reference (pointer) to a commit. Creating a
+branch is cheap because Git only creates a small reference to a commit;
+it does not copy the whole project.
+
+5.  What is the difference between merge and rebase? When is rebasing
+    dangerous?
+
+Ans: Merge combines two histories and normally creates a merge commit.
+It keeps the existing commit history unchanged.
+
+Rebase takes my commits and replays them on top of another base commit.
+This creates new commit IDs and rewrites history.
+
+Rebasing is dangerous when the commits have already been shared with
+other people because rewriting shared history can cause conflicts and
+can make other people’s history inconsistent.
+
+6.  reset –soft, reset –mixed, reset –hard: what does each change, and
+    which can lose work?
+
+Ans: git reset mainly moves HEAD to another commit.
+
+–soft: moves HEAD only. The changes remain staged.
+
+–mixed: moves HEAD and resets the Staging Area. The changes remain in
+the Working Directory. This is the default reset mode.
+
+–hard: moves HEAD, resets the Staging Area, and resets the Working
+Directory.
+
+–hard can lose uncommitted work because it discards changes in the
+Working Directory. It can also make commits unreachable from the current
+branch, although they may still be recoverable through the reflog.
+
+Part B: Practical tasks (do them, then report)
+
+1.  Restore a file deleted in commit 2
+
+mkdir git-task cd git-task git init
+
+echo “Version 1” > file.txt git add file.txt git commit -m “Commit 1”
+
+rm file.txt git add file.txt git commit -m “Commit 2”
+
+echo “Version 3” > file.txt git add file.txt git commit -m “Commit 3”
+
+git log –oneline
+
+git restore –source=HEAD~1 – file.txt git add file.txt git commit -m
+“Restore file.txt”
+
+Observation: The file was deleted in commit 2. It was restored from
+commit 1 using Git history, without copying it from outside the
+repository.
+
+2.  Undo a pushed commit without rewriting history
+
+git log –oneline git revert git push
+
+Why: git revert creates a new commit that reverses the changes from the
+bad commit. It does not rewrite or delete the existing commit, so it is
+appropriate for a shared branch.
+
+3.  Create branches, cause conflict, merge and resolve
+
+git switch -c branch-a echo “Original line” > conflict.txt git add
+conflict.txt git commit -m “Add conflict file”
+
+git switch -c branch-b sed -i ‘s/Original line/Change from branch B/’
+conflict.txt git add conflict.txt git commit -m “Change line from branch
+B”
+
+git switch branch-a sed -i ‘s/Original line/Change from branch A/’
+conflict.txt git add conflict.txt git commit -m “Change line from branch
+A”
+
+git merge branch-b cat conflict.txt
+
+vim conflict.txt git add conflict.txt git commit -m “Resolve merge
+conflict”
+
+Conflict markers mean:
+
+<<<<<<< HEAD Change from branch A ======= Change from branch B >>>>>>>
+branch-b
+
+<<<<<<< HEAD marks the version from the current branch. =======
+separates the two versions. >>>>>>> branch-b marks the version coming
+from the branch being merged.
+
+I resolve the conflict by editing the file, keeping or combining the
+correct content, then run git add and commit.
+
+4.  Remove a secret from latest state and inspect history
+
+echo “password=fake123” > secret.txt git add secret.txt git commit -m
+“Add secret”
+
+echo “change 1” > file.txt git add file.txt git commit -m “Change 1”
+
+echo “change 2” >> file.txt git add file.txt git commit -m “Change 2”
+
+git rm secret.txt git commit -m “Remove secret”
+
+git log –all – secret.txt git grep “fake123” $(git rev-list –all)
+
+Observation: Removing secret.txt from the latest state does not remove
+it from older commits. The secret can still be found in Git history,
+such as older commits and possibly reflogs or other clones.
+
+To truly remove it from Git history, history must be rewritten, for
+example with git filter-repo:
+
+git filter-repo –path secret.txt –invert-paths –force
+
+If the repository was already pushed, the rewritten history must be
+pushed to the remote, usually with:
+
+git push –force –all git push –force –tags
+
+Even after rewriting the repository, other clones, old refs, backups, or
+cached objects may still contain the old secret. A real password should
+also be revoked or changed.
+
+Part C: Scenarios (reasoning)
+
+1.  You ran git reset –hard and lost a commit you needed. Is it gone?
+    What would you look for, and where?
+
+It may not be permanently gone. I would check the reflog:
+
+git reflog
+
+The reflog can show the previous location of HEAD. I would find the lost
+commit hash, inspect it with:
+
+git show
+
+Then recover it with:
+
+git branch recovered
+
+The main place to look is the local Git reflog.
+
+2.  A teammate says “just force push.” What risks should you check
+    first? Is there a safer variant?
+
+Before force pushing, I should check whether the branch is shared,
+whether someone else has pushed new commits, and whether my push would
+overwrite their work or rewrite shared history.
+
+A safer variant is:
+
+git push –force-with-lease
+
+It only force-pushes if the remote branch is still in the state I
+expect, so it reduces the risk of overwriting someone else’s new work.
+
+Bonus
+
+.gitignore for a Python project:
+
+pycache/ .pyc .venv/ venv/ .env .pytest_cache/ .coverage build/ dist/
+.egg-info/ .vscode/ .idea/ .DS_Store
+
+Justification:
+
+pycache/ and *.pyc: Python-generated cache and bytecode files.
+
+.venv/ and venv/: Local Python virtual environments.
+
+.env: Environment variables that may contain passwords or API keys.
+
+.pytest_cache/: pytest cache files.
+
+.coverage: Test coverage data.
+
+build/ and dist/: Generated Python package/build files.
+
+*.egg-info/: Generated package metadata.
+
+.vscode/ and .idea/: Local IDE configuration.
+
+.DS_Store: macOS-generated metadata.
+
+git bisect:
+
+git bisect is used to find which commit introduced a bug.
+
+Scenario: Suppose my program worked at commit A but is broken at commit
+Z, and there are 100 commits between them. Instead of testing all 100
+commits, I can use binary search.
+
+git bisect start git bisect bad git bisect good
+
+Git checks out a middle commit. I test the program and tell Git:
+
+git bisect good
+
+if it works, or:
+
+git bisect bad
+
+if it is broken.
+
+Git continues narrowing the range until it finds the commit that
+introduced the bug.
+
+Finally:
+
+git bisect reset
