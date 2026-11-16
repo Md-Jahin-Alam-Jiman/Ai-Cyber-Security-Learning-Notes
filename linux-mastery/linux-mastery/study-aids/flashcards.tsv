@@ -1,0 +1,139 @@
+What does a # at the end of the shell prompt mean?	The session has superuser (root) privileges; $ means a normal user.	ch01
+Shell vs terminal emulator?	The shell interprets commands; the terminal emulator is the window that hosts it.	ch01
+Which commands identify who and where you are on a host?	whoami, id, hostname, uname -a, cat /etc/os-release	ch01
+Why is shell history weak evidence?	It is user-controlled, written at exit, and can be disabled, cleared or edited.	ch01
+Absolute vs relative path?	Absolute starts at /; relative starts at the current working directory.	ch02
+What does cd - do?	Returns to the previous directory.	ch02
+Where do system config files, logs and temporary files live?	/etc, /var/log, /tmp (and /var/tmp).	ch02
+Which file holds auth events on Debian-family vs RHEL-family?	/var/log/auth.log vs /var/log/secure (or journalctl).	ch02
+What does -rwsr-xr-x indicate?	A regular file with the setuid bit set (runs as its owner).	ch03
+Symbolic link vs hard link?	Symlink points to a path and can break; hard link is another name for the same inode.	ch03
+Which command shows a file's real type regardless of extension?	file	ch03
+Which command shows all timestamps and inode of a file?	stat	ch03
+Why is ctime useful in investigations?	It records metadata changes and cannot be set by ordinary tools like touch.	ch03
+What does [![:lower:]]* match?	Names whose first character is not lowercase.	ch04
+cp vs cp -a?	-a recurses and preserves permissions, ownership and timestamps.	ch04
+How do you delete a file named -rf?	rm -- -rf  or  rm ./-rf	ch04
+Why is rm not secure deletion?	It only removes the name; data blocks remain until overwritten.	ch04
+Why ls a pattern before rm-ing it?	To see exactly what the glob will match before deleting.	ch04
+Four kinds of shell commands?	Executable program, shell builtin, shell function, alias.	ch05
+How do you see every match for a command name?	type -a name	ch05
+How can PATH ordering be abused?	A malicious program earlier in PATH runs instead of the real one.	ch05
+Which man section covers file formats?	Section 5 (e.g. man 5 passwd).	ch05
+How do you bypass an alias for one call?	Prefix with a backslash (\ls) or use command ls.	ch05
+What are stdin, stdout, stderr numbers?	0, 1, 2.	ch06
+> vs >> ?	> overwrites the file; >> appends.	ch06
+Correct order to send both stdout and stderr to a file?	cmd > file 2>&1  (or cmd &> file in bash).	ch06
+Why sort before uniq?	uniq only collapses adjacent duplicates.	ch06
+What does tee do?	Copies stdin to both stdout and a file.	ch06
+How do you stop > from clobbering files?	set -o noclobber (override with >|).	ch06
+Who expands * : the shell or the command?	The shell, before the command runs.	ch07
+Which quotes stop $USER from expanding?	Single quotes.	ch07
+Why quote "$var"?	To prevent word splitting and globbing.	ch07
+What does {1..3} expand to?	1 2 3	ch07
+What is wildcard injection?	Filenames like --checkpoint-action=... get read as options when a glob such as * is expanded.	ch07
+Shortcut to delete everything before the cursor?	Ctrl+U	ch08
+Shortcut to search history interactively?	Ctrl+R	ch08
+What does sudo !! do?	Re-runs the previous command with sudo.	ch08
+Name two ways commands avoid being saved in history.	Leading space with HISTCONTROL=ignorespace; unset HISTFILE or HISTFILE=/dev/null; history -c.	ch08
+640 in symbolic form?	rw-r-----	ch09
+What does setuid do?	The program runs with its owner's privileges.	ch09
+Why is /tmp mode 1777?	World-writable, but the sticky bit stops users deleting others' files.	ch09
+Result of umask 027 on new files?	640 (666 minus 027); directories 750.	ch09
+Command to list what you may run with sudo?	sudo -l	ch09
+Find setuid files?	find / -xdev -perm -4000 -type f 2>/dev/null	ch09
+Correct perms for ~/.ssh and private keys?	700 for ~/.ssh, 600 for private keys.	ch09
+Admin group name on Debian vs RHEL?	sudo vs wheel.	ch09
+Which signal does plain kill send?	SIGTERM (15).	ch10
+Ctrl+C vs Ctrl+Z?	Interrupt (terminate) vs stop/pause the job.	ch10
+What does (deleted) after /proc/PID/exe suggest?	The binary was deleted while running, a common malware trait.	ch10
+Command for listening ports with process names?	sudo ss -tulpn	ch10
+Why prefer SIGTERM over SIGKILL?	SIGTERM lets the program clean up; SIGKILL cannot be caught.	ch10
+What does export do?	Makes a variable part of the environment so child processes inherit it.	ch11
+Which file holds normal bash aliases?	~/.bashrc (zsh: ~/.zshrc).	ch11
+Which variable injects shared libraries into programs?	LD_PRELOAD (also LD_LIBRARY_PATH).	ch11
+Login shell vs non-login startup files?	Login reads /etc/profile and ~/.profile family; non-login interactive reads ~/.bashrc.	ch11
+How do you leave vim without saving?	Esc, then :q!	ch12
+What does :%s/a/b/g do?	Replaces every a with b across the whole file.	ch12
+Why is sudo vim risky in a sudoers rule?	It can spawn a root shell (:!sh).	ch12
+Safe tool to edit sudoers?	visudo	ch12
+Which variable controls the primary prompt?	PS1	ch13
+Why wrap colour codes in \[ \] in PS1?	They mark non-printing characters so bash computes line length correctly.	ch13
+What does PROMPT_COMMAND='history -a' do?	Appends new history lines to the history file after every command.	ch13
+dpkg vs apt?	dpkg handles single .deb files; apt resolves dependencies via repositories.	ch14
+How to find which package owns a file (Debian / RHEL / Arch)?	dpkg -S file / rpm -qf file / pacman -Qo file	ch14
+Command to verify installed RPM files?	rpm -Va	ch14
+Debian equivalent for changed-file verification?	debsums -c (or dpkg -V).	ch14
+Why is curl URL | bash risky?	It runs unreviewed remote code with your privileges.	ch14
+What does mount -o loop allow?	Mounting a regular file (disk image) as if it were a disk.	ch15
+Safe mount options for untrusted media?	ro,noexec,nosuid,nodev (and noload for ext4 forensics).	ch15
+Main danger of dd?	It overwrites the target without confirmation; wrong of= destroys data.	ch15
+Why hash an evidence image?	To prove integrity: it has not changed since acquisition.	ch15
+Modern replacements for netstat and ifconfig?	ss and ip.	ch16
+Why is telnet unsafe?	No encryption: credentials and data travel in clear text.	ch16
+sshd_config lines that reduce brute-force risk?	PasswordAuthentication no, PermitRootLogin no, MaxAuthTries, AllowUsers.	ch16
+scp vs ssh port flag?	scp uses -P; ssh uses -p.	ch16
+Default firewall stance?	Deny inbound by default; allow only what is required.	ch16
+find: files modified less than 2 days ago?	-mtime -2	ch17
+Why find -print0 with xargs -0?	Safely handles filenames with spaces or newlines.	ch17
+Why can locate mislead?	Its database may be stale; use find for live results.	ch17
+find owner-less files?	-nouser -o -nogroup	ch17
+tar -tzf does what?	Lists contents of a gzip tar archive without extracting.	ch18
+rsync src dst vs rsync src/ dst?	Without slash copies the directory itself; with slash copies its contents.	ch18
+What is the 3-2-1 backup rule?	3 copies, 2 media types, 1 off-site (plus ideally an immutable copy).	ch18
+Risks of extracting untrusted archives?	Path traversal, symlink tricks, setuid files, decompression bombs.	ch18
+Safe habit before every rsync --delete?	Dry-run with -n first.	ch18
+^ and $ in regex?	Start and end of line.	ch19
+What does [^0-9] match?	Any single character that is not a digit.	ch19
+grep vs grep -E?	-E enables extended regex (+ ? | () {} without backslashes).	ch19
+What is ReDoS?	Crafted input makes a backtracking regex engine take exponential time.	ch19
+Why is a simple IPv4 regex not validation?	It checks digit counts, not the 0-255 range (999.300.1.1 passes).	ch19
+Command that removes carriage returns?	tr -d '\r'	ch20
+What does comm -12 a b show?	Lines common to both sorted files.	ch20
+awk: print the 4th-from-last field?	awk '{print $(NF-3)}'	ch20
+Top attacking IPs pipeline?	grep Failed log | grep -Eo '(IP regex)' | sort | uniq -c | sort -nr | head	ch20
+Risk of sed -i?	Edits in place; use -i.bak or test without -i first.	ch20
+Which command aligns columns into a table?	column -t	ch21
+Why use cat -v on untrusted files?	It shows control and escape characters instead of interpreting them.	ch21
+CUPS default port?	631 (IPP).	ch22
+Why disable unused print services?	Every running network service is attack surface; CUPS has had serious remote vulnerabilities.	ch22
+Steps of a classic source build?	./configure, make, make install (plus make check).	ch23
+Why not run ldd on an untrusted binary?	It may execute the program; use readelf -d or objdump -p instead.	ch23
+What does the shebang do?	Tells the kernel which interpreter runs the file.	ch24
+bash -n vs bash -x?	-n checks syntax only; -x traces each command as it runs.	ch24
+Why is a writable root-run script dangerous?	Anyone who can modify it can run commands as root.	ch24
+Safe temp file creation?	mktemp / mktemp -d	ch24
+How do you create a shell constant?	readonly NAME=value	ch25
+<<EOF vs <<'EOF'?	Unquoted expands variables and $(...); quoted prints text literally.	ch25
+What does ${var:-x} do?	Uses x when var is unset or empty.	ch25
+return vs exit in a function?	return leaves the function; exit ends the whole script.	ch26
+Why use local in functions?	Keeps variables from leaking into the global scope.	ch26
+Exit status meaning success?	0	ch27
+[ ] vs [[ ]]?	[ ] is POSIX and needs careful quoting; [[ ]] is a bash/zsh keyword with safer parsing, patterns and regex.	ch27
+What is a TOCTOU bug?	Time-of-check to time-of-use: state changes between checking and using a resource.	ch27
+What does read -r prevent?	Backslash interpretation (mangled input).	ch28
+How do you read a password silently?	read -s	ch28
+Why is eval "ls $dir" dangerous?	$dir is expanded into code, so ; id becomes another command (injection).	ch28
+while vs until?	while repeats while the command succeeds; until repeats until it succeeds.	ch29
+Why does cmd | while read lose variable changes?	The loop runs in a subshell; use redirection or < <(cmd).	ch29
+tail -F vs -f?	-F re-opens the file after log rotation.	ch29
+Why is rm -rf $DIR/* dangerous?	Empty DIR becomes rm -rf /*; guard with ${DIR:?}.	ch30
+Risk of set -x with secrets?	Expanded commands including secrets are printed to stderr and logs.	ch30
+What does *) do in case?	It is the default branch matching anything not matched earlier.	ch31
+Are case patterns regex or globs?	Globs.	ch31
+"$@" vs $*?	"$@" preserves each argument; unquoted $* re-splits and globs.	ch32
+Why is -- important before untrusted values?	It ends option parsing so values starting with - are treated as data.	ch32
+Why are secrets in arguments dangerous?	They appear in ps, /proc/PID/cmdline, history and logs.	ch32
+Exit code 64 by convention?	Usage error (EX_USAGE).	ch32
+Why is for f in $(ls) wrong?	It splits on whitespace and globs, breaking names with spaces or special characters.	ch33
+What does shopt -s nullglob change?	Unmatched globs expand to nothing instead of the literal pattern.	ch33
+What does ${path##*/} return?	The basename (text after the last /).	ch34
+What is the octal trap?	A leading 0 makes numbers octal (08 is an error); force decimal with 10#.	ch34
+Why is $RANDOM unsafe for passwords?	It is small, predictable and not cryptographically secure.	ch34
+"${a[@]}" vs "${a[*]}"?	First yields each element as a separate word; second joins them into one word.	ch35
+Why must associative arrays be declared?	Without declare -A bash treats the subscript as arithmetic on an indexed array.	ch35
+Why are arrays safer than strings for building commands?	Argument boundaries are preserved: no re-splitting, globbing or injection.	ch35
+{ } vs ( )?	{ } runs in the current shell; ( ) runs in a subshell that isolates changes.	ch36
+Which signals cannot be trapped?	SIGKILL and SIGSTOP.	ch36
+Why mktemp -d over /tmp/myapp.$$?	It creates an unpredictable private path atomically, avoiding symlink and race attacks.	ch36
+Is rbash a security boundary?	No; it can often be escaped. Use real isolation and least privilege.	ch36
